@@ -7,7 +7,7 @@
   },
 
   "spec": {
-    "apiServer": "https://k3s:6443",
+    "apiServer": "https://127.0.0.1:6443",
     "namespace": "default"
   }
 }

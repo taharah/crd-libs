@@ -1,0 +1,55 @@
+name: Generate CRDs
+on:
+  push:
+    branches:
+      - 'master'
+jobs:
+  generate:
+    name: Generate jsonnet bundles for CRDs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install K3S
+        run: |
+          set -x
+          curl -sfL https://get.k3s.io | sh -
+          sudo chmod -R a+rw /etc/rancher/k3s
+          sudo mkdir -p $HOME/.kube && sudo chown -R runner $HOME/.kube
+          sudo k3s kubectl config view --raw > $HOME/.kube/config
+          sudo chown runner $HOME/.kube/config
+          kubectl version
+          which kubectl
+
+      - name: Setup Golang
+        uses: actions/setup-go@v1
+        with:
+          go-version: '1.14.12'
+
+      - name: Setup tools
+        env:
+          GOPATH: /home/runner/go
+        run: |
+          set -x
+          sudo curl -Lo /usr/local/bin/jb https://github.com/jsonnet-bundler/jsonnet-bundler/releases/latest/download/jb-linux-amd64
+          sudo curl -Lo /usr/local/bin/tk https://github.com/grafana/tanka/releases/latest/download/tk-linux-amd64
+          curl -Lo /tmp/jsonnet.tar.gz https://github.com/google/jsonnet/releases/download/v0.17.0/jsonnet-bin-v0.17.0-linux.tar.gz
+          sudo tar -xvf /tmp/jsonnet.tar.gz -C /usr/local/bin
+          sudo chmod a+x /usr/local/bin/*
+          go get github.com/jsonnet-libs/k8s
+          go install github.com/jsonnet-libs/k8s
+          go get github.com/jsonnet-libs/docsonnet
+          go install github.com/jsonnet-libs/docsonnet
+
+
+      - name: Render required files
+        run: |
+          jsonnet -m . -S autogen.jsonnet
+
+      - name: Auto-Gen
+        run: |
+          sh runme.sh
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Codegen
