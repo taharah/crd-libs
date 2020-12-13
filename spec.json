@@ -1,0 +1,13 @@
+{
+  "apiVersion": "v1alpha1",
+  "kind": "Environment",
+
+  "metadata": {
+    "name": "k3s-crds"
+  },
+
+  "spec": {
+    "apiServer": "https://k3s:6443",
+    "namespace": "default"
+  }
+}
